@@ -16,17 +16,17 @@ class EntropyGiniBinning():
 
     def info_gain(self, data, feature, target):
         '''信息增益'''
-        total_entropy = entropy_dt(data, target)
+        total_entropy = self.entropy_dt(data, target)
         entLoss_init = 0
         for v in list(data[feature].unique()):
             data_t = data[data[feature]==v]
-            ent_t = entropy_dt(data = data_t, target=target)
+            ent_t = self.entropy_dt(data = data_t, target=target)
             entLoss_init = entLoss_init + data_t.shape[0]/data.shape[0]*ent_t
         return total_entropy - entLoss_init
 
     def gain_ratio(self, data, feature, target):
         '''增益率'''
-        inf_g = info_gain(data,feature,target)
+        inf_g = self.info_gain(data,feature,target)
         iv = 0
         for v in list(data[feature].unique()):
             data_t = data[data[feature]==v]
@@ -34,7 +34,7 @@ class EntropyGiniBinning():
             iv = iv + iv_t
         return inf_g/(-iv)
 
-    def gini_dt_feature(self, data, feature, target):
+    def gini_dt(self, data, feature, target):
         '''基尼指数'''
         def gini_count(self, data, target):
             gini_init = 0
@@ -65,8 +65,8 @@ class EntropyGiniBinning():
             if left_len<min_samples_leaf or right_len<min_samples_leaf: #划分后样本数小于指定值，则停止划分
                 pass
             else:
-                # gini_dict[split_val] = info_gain(data_t,feature='bi_cut',target=target) #基于信息增益
-                gini_dict[split_val] = gini_dt_feature(data_t,feature='bi_cut',target=target) #基于基尼指数
+                # gini_dict[split_val] = self.info_gain(data_t,feature='bi_cut',target=target) #基于信息增益
+                gini_dict[split_val] = self.gini_dt(data_t,feature='bi_cut',target=target) #基于基尼指数
         if gini_dict:
             # return max(gini_dict,key=gini_dict.get)
             return min(gini_dict,key=gini_dict.get) #返回基尼指数最小划分点
@@ -84,7 +84,7 @@ class EntropyGiniBinning():
             # 遍历每个数据集，只要找一个划分点则停止遍历，根据现有划分点切割成新的数据集，重新遍历，直到不能在任何一个数据集上找到新的划分点
             for data_t in data_cut:
                 # 寻找单个最优划分点
-                best_split = bi_partition(data=data_t,feature=feature,target=target,min_samples_leaf=min_samples_leaf)
+                best_split = self.bi_partition(data=data_t,feature=feature,target=target,min_samples_leaf=min_samples_leaf)
                 if best_split is not None:
                     best_splist_list.append(best_split)
                     best_splist_list2 = copy.deepcopy(best_splist_list)
@@ -129,7 +129,7 @@ class BestSplitGini():
         param min_sample: 待切分样本的最小样本量(限制条件)
         '''
         # 根据样本评分计算相邻不同分数的中间值
-        score_median_list = calc_score_median(sample_set, var)
+        score_median_list = self.calc_score_median(sample_set, var)
         median_len = len(score_median_list)
         sample_cnt = sample_set.shape[0]
         sample1_cnt = sum(sample_set['target'])
@@ -170,7 +170,7 @@ class BestSplitGini():
         param min_sample: 待切分样本的最小样本量(限制条件)
         param split_list: 最优分割点list
         '''
-        split, position = choose_best_split(sample_set, var, min_sample)
+        split, position = self.choose_best_split(sample_set, var, min_sample)
         if split != 0.0:
             split_list.append(split)
         # 根据分割点划分数据集，继续进行划分
@@ -197,5 +197,5 @@ class BestSplitGini():
         min_df = sample_set.shape[0] * 0.05
         split_list = []
         # 计算第一个和最后一个分割点
-        bining_data_split(sample_set, var, min_df, split_list)
+        self.bining_data_split(sample_set, var, min_df, split_list)
         return split_list
