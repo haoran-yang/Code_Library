@@ -5,17 +5,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
-from pyecharts import Bar,Line,Overlap
 import math
 from collections import Counter
-
-
-def vif_compute(data,index):
-    '''方差膨胀因子(VIF)：大于10存在严重多重共线性
-    data:frame 自变量
-    index:被解释变量的索引位置'''
-    from statsmodels.stats.outliers_influence import variance_inflation_factor
-    return variance_inflation_factor(data.values, index)
+from pyecharts import Bar,Line,Overlap,Grid,Page
 
 
 class featureCountsDraw():
@@ -44,7 +36,6 @@ class featureCountsDraw():
 
     def drawfunc(self,A,text,yaxis_max=200000,yaxis_force_interval=0.25,width=1000):
         '''坏账率绘图函数'''
-        from pyecharts import Bar,Line,Overlap,Grid,Page
         bar = Bar(text,title_pos='center',width='100%')  
         line = Line(text,title_pos='center',width='100%') 
         bar.add("好客户",A.iloc[:,0].tolist(),A['好客户'].tolist(),yaxis_min=0,yaxis_max=yaxis_max,is_label_show=True,label_pos='inside',
@@ -61,6 +52,7 @@ class featureCountsDraw():
         grid=Grid(width=width)
         grid.add(overlap,grid_right='10%')
         return grid
+
 
 class featureYCountRatio():
     '''单个特征按label统计'''
@@ -144,6 +136,7 @@ class featureYCountRatio():
         overlap.add(line,is_add_yaxis=True,yaxis_index=1)
         return counts_ratio.style.bar(subset=['All','one_ratio']), overlap
 
+
 def divide_x_dtype(df):
     """
     划分变量数据类型
@@ -184,3 +177,10 @@ def null_value_counts(df,value=0.9):
     null_df.rename(columns={0:'null_nums',1:'null_percent'},inplace=True)
     null_df_style=null_df[null_df.null_nums>0]
     return null_df_style.style.bar(), list(null_df[null_df.null_percent>=value].index)
+
+def vif_compute(data,index):
+    '''方差膨胀因子(VIF)：大于10存在严重多重共线性
+    data:frame 自变量
+    index:被解释变量的索引位置'''
+    from statsmodels.stats.outliers_influence import variance_inflation_factor
+    return variance_inflation_factor(data.values, index)
