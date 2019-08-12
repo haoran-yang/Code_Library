@@ -10,7 +10,7 @@ from collections import Counter
 from pyecharts import Bar,Line,Overlap,Grid,Page
 
 
-class featureCountsDraw():
+class FeatureCountsPlot():
     '''特征与坏账统计。绘图。pyecharts'''
     def __init__(self):
         pass
@@ -54,7 +54,7 @@ class featureCountsDraw():
         return grid
 
 
-class featureYCountRatio():
+class FeatureYCountRatio():
     '''单个特征按label统计'''
     def __init__(self):
         pass

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-class seabornPlotting():
+class SeabornPlot():
     def __init__(self):
         pass
 
