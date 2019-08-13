@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import copy
 
+
+#方案一
 class EntropyGiniBinning():
     def __init__(self):
         pass
@@ -103,7 +105,8 @@ class EntropyGiniBinning():
         return best_splist_list
 
 
-'''网友方案。get_bestsplit_list方法与EntropyGiniBinning类中split_numeric方法结果一致，但响应更快。'''
+#方案二
+'''get_bestsplit_list方法与EntropyGiniBinning类中split_numeric方法结果一致，但响应更快。'''
 def calc_score_median(sample_set, var):
     '''
     计算相邻评分的中位数，以便进行决策树二元切分
@@ -196,3 +199,58 @@ def get_bestsplit_list(sample_set, var):
     # 计算第一个和最后一个分割点
     bining_data_split(sample_set, var, min_df, split_list)
     return split_list
+
+
+# 方案三。R最优分箱。
+"""library(grid)
+library(partykit)
+library(libcoin)
+# library(mvnorm)
+library(rpart)
+library(Formula)
+library(smbinning)
+setwd("D:\\三方数据测试\\电话邦_凭安建模测试")
+dat = read.csv('pinan_toR.txt',sep='~',header = T)
+
+dat$y = as.numeric(as.character(dat$y))
+
+d = list()
+for(i in names(dat)[14:117])  {
+  tem1 = dat[dat[,i]!=-99999,]
+  tem2 = dat[(dat[,i]!=-99999)&(dat[,i]!=0),]
+  print(i)
+  if("出现错误" %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),
+                          error=function(e){print("出现错误")} )) next
+  if("try-error" %in% class(try(smbinning(df = tem1,y='y',x=i,p=0.1)$ivtable,silent = TRUE))){
+    print('try-error')
+    result = smbinning(df = tem2,y='y',x=i,p=0.1)
+    x.inv = try(result$ivtable,silent = TRUE)
+    if("try-error" %in% class(x.inv)) next
+    # print(result$cuts) 
+    d[[i]] <- paste(c(0,result$cuts),collapse=",")
+    
+  }else{
+    result = smbinning(df = tem1,y='y',x=i,p=0.1)
+    x.inv = try(result$ivtable,silent = TRUE)
+    if("try-error" %in% class(x.inv)) next
+    # print(result$ivtable)
+    # print(result$cuts)  
+    d[[i]] <- paste(result$cuts,collapse=",")
+  }
+}
+
+write.table(data.frame(d),'pinan_smbinning.txt',sep = '~')
+
+# smbinning.plot(result,options = 'WoE',sub = 'CreditAmount')
+for(i in names(dat)[3:79])  {
+  print(i)
+  #if("出现错误" %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),warning = function(w){print("出现警告")},error=function(e){print("出现错误")} )) next
+  if("出现错误" %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),
+                          error=function(e){print("出现错误")} )) next
+  result = smbinning(df = tem1,y='y',x=i,p=0.1)
+  x.inv = try(result$ivtable,silent = TRUE)
+  if("try-error" %in% class(x.inv)) next
+  # print(result$ivtable)
+  print(result$cuts)
+}
+"""

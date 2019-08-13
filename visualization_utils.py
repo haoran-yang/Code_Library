@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
+import graphviz
 
 
 class SeabornPlot():
@@ -120,3 +121,9 @@ class SeabornPlot():
         f, ax = plt.subplots(figsize=figsize)
         radviz(data, class_column, ax=ax)
         plt.show()
+
+
+def tree_visualization(dt,x_list):
+    '''决策树可视化'''
+    dot_data = tree.export_graphviz(dt, out_file=None, feature_names = x_list, class_names = True, filled = True, rounded = True)
+    return graphviz.Source(dot_data)

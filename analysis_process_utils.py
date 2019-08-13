@@ -8,6 +8,9 @@ import copy
 import math
 from collections import Counter
 from pyecharts import Bar,Line,Overlap,Grid,Page
+import xgboost
+import lightgbm
+from sklearn import ensemble
 
 
 class FeatureCountsPlot():
@@ -184,3 +187,31 @@ def vif_compute(data,index):
     index:被解释变量的索引位置'''
     from statsmodels.stats.outliers_influence import variance_inflation_factor
     return variance_inflation_factor(data.values, index)
+
+def feature_importance_ensemble(x_array,y_array,xName_list,n_estimators=100, max_depth=3,figsize=(22,8)):
+    '''集成模型特征重要性计算、排序和绘图'''
+    xgbc = xgboost.XGBClassifier(n_estimators=n_estimators, max_depth=max_depth)
+    lgbc = lightgbm.LGBMClassifier(n_estimators=n_estimators, max_depth=max_depth)
+    rfc = ensemble.RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth)
+    xgbc.fit(X=x_array,y=y_array)
+    lgbc.fit(X=x_array,y=y_array)
+    rfc.fit(X=x_array,y=y_array)
+    xgbc_imp = pd.Series(xgbc.feature_importances_,index=xName_list,name='importance_xgbc')
+    lgbc_imp = pd.Series(lgbc.feature_importances_,index=xName_list,name='importance_lgbc')
+    rfc_imp = pd.Series(rfc.feature_importances_,index=xName_list,name='importance_rfc')
+    imp_df=pd.concat([xgbc_imp,lgbc_imp,rfc_imp],axis=1)
+    for i in ['importance_xgbc','importance_lgbc','importance_rfc']:
+         imp_df['rank_'+i.split('_')[1]] = imp_df[i].rank(ascending=False)
+    imp_df['rank_Total'] = imp_df[['rank_xgbc','rank_lgbc','rank_rfc']].sum(axis=1).rank()
+    imp_df = imp_df.sort_values('rank_Total')
+    # 重要性绘图
+    plt.figure(figsize=figsize)
+    n=1
+    for i in ['importance_xgbc','importance_lgbc','importance_rfc']:
+        plt.subplot(1,3,n)
+        g = sns.barplot(y=imp_df.index, x=imp_df[i].values)
+        g.set_title(i)
+        if n==1:
+            g.set_ylabel('Total Importances Ranking')
+        n+=1
+    return imp_df
