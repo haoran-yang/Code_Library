@@ -139,3 +139,54 @@ def showCluster(dataSet, k, centroids, clusterAssment):
     for i in range(k):
         ax.scatter(centroids[i, 0], centroids[i, 1], dataSet[i, 2], c=mark[3],s=100)
         #plt.plot(centroids[i, 0], centroids[i, 1], mark[i], markersize = 12)
+
+
+class ModelChoose():
+    def __init__(self):
+        pass
+    def model_init(self,reDefine_clf = {},used_clf=[]):
+        clfs = {'xgb':xgboost.XGBClassifier(n_estimators=100, max_depth=3),
+                'lgb':lightgbm.LGBMClassifier(n_estimators=100, max_depth=3),
+                'gbdt':ensemble.GradientBoostingClassifier(n_estimators=100, max_depth=3),
+                'rf':ensemble.RandomForestClassifier(n_estimators=200, max_depth=6),
+                'logit':linear_model.LogisticRegression(),
+                'svc':svm.SVC(probability=True),
+                'adbt':ensemble.AdaBoostClassifier(base_estimator=tree.DecisionTreeClassifier(max_depth=3)),
+                'bagg':ensemble.BaggingClassifier(n_estimators=100),
+                'ext':ensemble.ExtraTreesClassifier(n_estimators=100,max_depth=3),
+                #   'perceptron':linear_model.Perceptron(),
+                'dt':tree.DecisionTreeClassifier(),
+                'knn':neighbors.KNeighborsClassifier(),
+                'network':neural_network.MLPClassifier()}
+        clfs.update(reDefine_clf) if reDefine_clf else clfs
+        if used_clf:
+            return dict((key, value) for key, value in clfs.items() if key in used_clf)
+        else:
+            return clfs
+            
+    def model_auc(self,clfs,X_array,y_array,contain_train=True,Stratified=True,n_splits=5):
+        if Stratified:
+            KF = model_selection.StratifiedKFold(n_splits=n_splits,shuffle=True,random_state=6)
+        else:
+            KF = model_selection.KFold(n_splits=n_splits,shuffle=True,random_state=8)
+        auc_dfs = pd.DataFrame()
+        for clf_name,clf in clfs.items():
+            if contain_train:
+                train_auc,test_auc=[],[]
+                for train_index, test_index in KF.split(X=X_array, y=y_array):
+                    trainX,trainY,testX,testY = X_array[train_index],y_array[train_index],X_array[test_index],y_array[test_index]
+                    clf.fit(X=trainX,y=trainY)
+                    train_prob = clf.predict_proba(trainX)[:,1]
+                    test_prob = clf.predict_proba(testX)[:,1]
+                    train_auc.append(metrics.roc_auc_score(trainY,train_prob))
+                    test_auc.append(metrics.roc_auc_score(testY,test_prob))
+                auc_dfs.loc[clf_name,'train_mean'] = np.array(train_auc).mean()
+                auc_dfs.loc[clf_name,'test_mean'] = np.array(test_auc).mean()
+                auc_dfs.loc[clf_name,'auc_diff'] = auc_dfs.loc[clf_name,'train_mean'] - auc_dfs.loc[clf_name,'test_mean']
+                auc_dfs.loc[clf_name,'train_std'] = np.array(train_auc).std()
+                auc_dfs.loc[clf_name,'test_std'] = np.array(test_auc).std()
+            else:
+                scores = model_selection.cross_val_score(estimator=clf,X=X_array,y=y_array,cv=KF.split(X=X_array, y=y_array),scoring='roc_auc',n_jobs=-1)
+                auc_dfs.loc[clf_name,'test_mean'] = scores.mean()
+                auc_dfs.loc[clf_name,'test_std'] = scores.std()
+        return auc_dfs

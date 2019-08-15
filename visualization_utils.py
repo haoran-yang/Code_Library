@@ -4,7 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import graphviz
-
+from sklearn import tree
 
 class SeabornPlot():
     def __init__(self):
