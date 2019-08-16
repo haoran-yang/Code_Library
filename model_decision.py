@@ -142,6 +142,7 @@ def showCluster(dataSet, k, centroids, clusterAssment):
 
 
 class ModelChoose():
+    '''模型选择'''
     def __init__(self):
         pass
     def model_init(self,reDefine_clf = {},used_clf=[]):
@@ -190,3 +191,37 @@ class ModelChoose():
                 auc_dfs.loc[clf_name,'test_mean'] = scores.mean()
                 auc_dfs.loc[clf_name,'test_std'] = scores.std()
         return auc_dfs
+
+
+def grid_search(clf,param_grid,x_array,y_array,result_df=pd.DataFrame(),socring='roc_auc',Kfold=5):
+    '''网格搜索调参，并记录中间结果'''
+    KF = model_selection.StratifiedKFold(n_splits=Kfold,random_state=2,shuffle=True)
+    gs=model_selection.GridSearchCV(estimator=clf,param_grid=param_grid,scoring=socring,n_jobs=-1,cv=KF.split(x_array,y_array))
+    gs.fit(x_array,y_array)
+    result_t=pd.DataFrame(gs.cv_results_['params'])
+    result_t['mean_test_score']=gs.cv_results_['mean_test_score']
+    result_df = pd.concat([result_df,result_t])
+    result_df = result_df.sort_values(by=list(result_df.columns[:-1]))
+    result_df = result_df.drop_duplicates()
+    print('best_score: %s'%gs.best_score_)
+    print('best_params:%s'%gs.best_params_)
+    return result_df.reset_index(drop=True)
+
+def params_score_plot(result_df,xlim=[0,1]):
+    '''网格搜索调参的中间结果绘图（仅满足两个参数）'''
+    plt.figure(figsize=(16,6))
+    plt.subplot(121)
+    y_axis = result_df.iloc[:,0].map(str)
+    y_label = result_df.columns[0]
+    for i in range(1,result_df.shape[1]-1):
+        y_axis = y_axis+' and '+result_df.iloc[:,i].map(str)
+        y_label = y_label+' AND '+result_df.columns[i]
+    g = sns.barplot(x=result_df['mean_test_score'].values,y=y_axis)
+    g.set_xlim(xlim)
+    g.set_ylabel(y_label)
+    g.set_xlabel('mean_test_score')
+    plt.subplot(122)
+    g=sns.scatterplot(x=result_df.iloc[:,0].values,y=result_df.iloc[:,1].values,size=result_df['mean_test_score'].values,legend=False)
+    g.set_xlabel(result_df.columns[0])
+    g.set_ylabel(result_df.columns[1])
+    g.set_title('Size=mean_test_score')
