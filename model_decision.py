@@ -225,3 +225,36 @@ def params_score_plot(result_df,xlim=[0,1]):
     g.set_xlabel(result_df.columns[0])
     g.set_ylabel(result_df.columns[1])
     g.set_title('Size=mean_test_score')
+
+
+# stacking模型融合方法 
+def get_oof(clf, x_train, y_train, x_test, k, k_flod, scores=False):
+    oof_train = np.zeros((x_train.shape[0],))
+    oof_test = np.zeros((x_test.shape[0],))
+    oof_test_skf = np.empty((k, x_test.shape[0]))
+
+    for i, (train_index, test_index) in enumerate(k_flod):
+        x_tr = x_train[train_index]
+        y_tr = y_train[train_index]
+        x_te = x_train[test_index]
+
+        clf.fit(x_tr, y_tr)
+        if scores:
+            oof_train[test_index] = clf.predict_proba(x_te)[:,1]
+            oof_test_skf[i,:] = clf.predict_proba(x_test)[:,1]            
+        else:
+            oof_train[test_index] = clf.predict(x_te)
+            oof_test_skf[i,:] = clf.predict(x_test)            
+
+    oof_test[:] = oof_test_skf.mean(axis=0)
+    return oof_train.reshape(-1, 1), oof_test.reshape(-1, 1)
+
+def stacking_method(clfs, x_train, y_train, x_test, k, scores=True):
+    x_train_Step2, x_test_Step2 =[],[]
+    kf = model_selection.StratifiedKFold(n_splits=k,shuffle=True,random_state=2)
+    for clf in clfs:
+        k_flod = kf.split(x_train,y_train)
+        oof_train, oof_test = get_oof(clf, x_train, y_train, x_test, k, k_flod, scores=scores)
+        x_train_Step2.append(oof_train)
+        x_test_Step2.append(oof_test)
+    return np.concatenate(x_train_Step2,axis=1),np.concatenate(x_test_Step2,axis=1)
