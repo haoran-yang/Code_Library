@@ -4,6 +4,11 @@ from sklearn.decomposition import PCA
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+import pandas as pd
+import xgboost
+import lightgbm
+from sklearn import ensemble,tree,linear_model,svm,neighbors,neural_network
+from sklearn import model_selection,metrics
 
 
 class Kmeans_params_count():
