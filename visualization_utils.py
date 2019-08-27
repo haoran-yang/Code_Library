@@ -49,6 +49,28 @@ class SeabornPlot():
             sns.jointplot(x=x, y=y, data=data, kind=kind,height=7)        
         plt.show()
 
+    def bar_plot(self,data,x,hue=None,figsize=(10,6),ax=None):
+        '''分组条形图。量。hue 仅支持0、1二分类'''
+        sns.set(style="whitegrid")
+        if hue is None:
+            Ser = data[x].value_counts()
+            Ser.plot(kind='bar',figsize=figsize)
+        else:
+            positives = data[data[hue]==1][x].value_counts()
+            negatives = data[data[hue]==0][x].value_counts()
+            df = pd.DataFrame([positives,negatives])
+            df.index = [hue+'_1',hue+'_0']
+            df.T.plot(kind='bar',stacked=True,figsize=figsize,ax=ax)
+            ax.set_title(x)
+
+    def distribute_numeric(self,data,x,hue,xlim):
+        '''数值变量分布图'''
+        facet = sns.FacetGrid(data, hue=hue,aspect=4)
+        facet.map(sns.kdeplot,x,shade= True)
+        facet.set(xlim=(0, data[x].max()))
+        facet.add_legend()
+        plt.xlim(xlim[0],xlim[1])
+
     def catplot_sns(self,data=None, x=None, y=None, hue=None,exampleShow=False):
         '''分组条形图 
         data:DataFrame, array 数据源

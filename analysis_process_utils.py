@@ -118,7 +118,7 @@ class FeatureLabelSizeRatio():
             else:
                 return x_des_woe_iv, overlap
 
-    def get_sampleSize_oneRatio(self,data,x,xtype,y,value):
+    def get_sampleSize_oneRatio(self,data,x,xtype,y,value,style=True):
         '''单个特征-Y值分布统计。与get_woe_iv区别：不计算woe和iv。y为float型，取值0和1。x为float(数值型)或object(类别型)。xtype:"numeric"或其他。value:统计值，如"LOAN_NO"
         return style形式dataframe 和 overlap'''
         counts_ratio=pd.pivot_table(data=data[[x,y,value]],values=value,index=x,columns=y,aggfunc=len,margins=True,fill_value=0)
@@ -137,7 +137,10 @@ class FeatureLabelSizeRatio():
         overlap = Overlap(width='100%')
         overlap.add(bar)
         overlap.add(line,is_add_yaxis=True,yaxis_index=1)
-        return counts_ratio.style.bar(subset=['All','one_ratio']), overlap
+        if style:
+            return counts_ratio.style.bar(subset=['All','one_ratio']), overlap
+        else:
+            return counts_ratio, overlap
 
 
 def divide_x_dtype(df):
