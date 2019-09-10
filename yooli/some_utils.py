@@ -36,7 +36,7 @@ def get_data_from_mysql(sql,configs=mysql_configs):
     return df
 
 def get_data_from_oracle(sql,configs=oracle_configs):
-    os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
+    os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8' # 'SIMPLIFIED CHINESE_CHINA.UTF8'
     username = configs['username']
     password = configs['password']
     addr = '{}:{}/{}'.format(configs['host'], configs['port'], configs['service_name'])
