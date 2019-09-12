@@ -32,7 +32,7 @@ def vintage_compute(data,str_prov):
     ratio_T = ratio_T.T[['mob'+str(index+2) for index in range(len(ratio.columns))]]
     return merge_data[['LEND_MONTH','STR_PROV','SUM_LOAN_AMT']].merge(ratio.reset_index(),on='LEND_MONTH'), ratio_T
 
-def vintage_plot(ratio_T,title,ylim=(0,0.2)):
+def vintage_plot(ratio_T,title,ylim=(0,0.2),save=False):
     sns.set()
     plt.figure(figsize=(15,6))
     for i in ratio_T.index:
@@ -40,6 +40,8 @@ def vintage_plot(ratio_T,title,ylim=(0,0.2)):
     plt.legend(ratio_T.index,ncol=6,loc=9)
     plt.ylim(ylim[0],ylim[1])
     plt.title(title,fontsize=18)
+    if save:
+        plt.savefig(fname=title+'.png',dpi=300,bbox_inches='tight')
 
 if __name__=='__main__':
     sql_vintageM2Plus = """select 
