@@ -1,1 +1,1 @@
-!['挂单时间分布'](/img/gd_distribution.png)
+![](img/gd_distribution.png)
