@@ -16,7 +16,7 @@ mysql_configs = {
 # 快信消金库
 oracle_configs = {
                 'username': 'haoran_yang_pohoocredit',
-                'password': 'yhr!23',
+                'password': 'yhr12#',
                 'host': '10.30.4.26',
                 'port': '1521',
                 'service_name': 'odsdb'
