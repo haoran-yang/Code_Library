@@ -7,54 +7,80 @@ import seaborn as sns
 import copy
 import math
 from collections import Counter
-from pyecharts import Bar,Line,Overlap,Grid,Page
 import xgboost
 import lightgbm
 from sklearn import ensemble
+from pyecharts import Bar,Line,Overlap,Grid,Page
 
 
-class FeatureCountsPlot():
-    '''特征与坏账统计。绘图。pyecharts'''
-    def __init__(self):
-        pass
-    def onevar(self,data,x_index,y_index):
-        '''统计函数
-        param
-            data：frame 数据源
-            x_index：int 特征所在列索引
-            y_index: int 目标所在列索引
-        return
-            A: frame
-        '''            
-        A=pd.DataFrame(data.groupby(data.columns[x_index],as_index=False).size())
-        A.columns=['单量']
-        B=data[data.iloc[:,y_index]=='1'].groupby(data.columns[x_index]).size()
-        A['坏账']=B
-        A=A.reset_index()
-        A['好客户']=list(map(lambda x,y:x-y,A['单量'],A['坏账']))    
-        A['坏账率']=list(map(lambda x,y:round(x/y,4),A['坏账'],A['单量']))
-        A['总体坏账率']=round(A['坏账'].sum()/A['单量'].sum(),4)
-        A=A.applymap(lambda x:x if pd.notnull(x) else 0)
-        return A
+# 找出唯一取值列
+def one_unique_cols(data,cols=[]):
+    '''筛选只有唯一取值的特征列，cols默认为data所有列'''
+    oneUnCol = []
+    cols = data.columns if not cols else cols
+    for col in cols:
+        if data[col].nunique(dropna=False)==1:
+            oneUnCol.append(col)
+    return oneUnCol
+# 找出分布极端列
+def extreme_imbalance_cols(data,cols=[],threshold=0.99):
+    '''筛选取值极端分布列，cols默认为data所有列，threshold默认0.99'''
+    exImbCol = []
+    cols = data.columns if not cols else cols
+    for col in cols:
+        if data[col].value_counts(dropna=False)[0]/data.shape[0] >= threshold:
+            exImbCol.append(col)
+    return exImbCol
 
-    def drawfunc(self,A,text,yaxis_max=200000,yaxis_force_interval=0.25,width=1000):
-        '''坏账率绘图函数'''
-        bar = Bar(text,title_pos='center',width='100%')  
-        line = Line(text,title_pos='center',width='100%') 
-        bar.add("好客户",A.iloc[:,0].tolist(),A['好客户'].tolist(),yaxis_min=0,yaxis_max=yaxis_max,is_label_show=True,label_pos='inside',
-                label_color=['#FFB6B9'],legend_pos='right', legend_orient='vertical',is_stack=True)
-        bar.add("坏客户",A.iloc[:,0].tolist(),A['坏账'].tolist(),yaxis_min=0,yaxis_max=yaxis_max,is_label_show=True,label_pos='inside',
-                label_color=['#BBDED6'],legend_pos='right',legend_orient='vertical',is_stack=True) 
-        line.add('坏账率',A.iloc[:,0].tolist(),A['坏账率'].tolist(),yaxis_min=0,yaxis_max=1,yaxis_force_interval=yaxis_force_interval,is_smooth=True,
-                legend_pos='right',point_symbol='circle',legend_orient='vertical',line_width =2,is_label_show =True)
-        line.add('总体坏账率',A.iloc[:,0].tolist(),A['总体坏账率'].tolist(),yaxis_min=0,yaxis_max=1,yaxis_force_interval=yaxis_force_interval,is_smooth=True,
-                legend_pos='right',legend_orient='vertical',line_width =2,line_type='dotted')
-        overlap = Overlap(width='100%')
-        overlap.add(bar)
-        overlap.add(line,is_add_yaxis=True,yaxis_index=1) 
-        grid=Grid(width=width)
-        grid.add(overlap,grid_right='10%')
-        return grid
+def strNan_to_nan(data):
+    '''str类型空值替换为np.nan'''
+    return data.replace(['nan','NaN','',' ','NaT','NA','None',None],np.nan)
+
+def null_ratio_counts(data,value=0.9):
+    """
+    缺失率统计
+    缺失比例一般达到90%则可舍弃，也可以将值替换为有值(1)和空值(0)，继续作为特征
+    param:
+          data: dataframe
+          value:阈值，返回缺失比例>=该值的特征名,默认0.9
+    return:
+          缺失统计表
+          比例较高特征列表
+    """
+    data_null=data.isnull().sum().sort_values(ascending=False)
+    data_null_percent=data_null/data.shape[0]
+    null_data=pd.concat([data_null,data_null_percent],axis=1)
+    null_data.rename(columns={0:'NullCounts',1:'NullRatio'},inplace=True)
+    null_data_style=null_data[null_data['NullCounts']>0]
+    return null_data_style.style.bar(), list(null_data[null_data['NullRatio']>=value].index)
+
+def divide_x_dtype(data):
+    """
+    划分数据类型
+    注：缺失值需为np.nan
+    """
+    numeric_X=[]
+    category_X=[]
+    encode_X = []
+    for col,ser in data.iteritems():
+        ser_t = ser[ser.notnull()].astype(str)
+        try:
+            ser_t.apply(float)
+            try:
+                encode_nums = ((ser_t.str[:1]=='0')&(ser_t.str.len()>1)&(ser_t.apply(lambda x:False if '.' in x else True))).sum()
+            except:
+                print('code error!')
+            if encode_nums>0:
+                category_X.append(col)
+                encode_X.append(col)
+                print('%s 编码取值量:%s, 取值率:%.2f'%(col,encode_nums,encode_nums/len(ser_t)))
+            else:
+                numeric_X.append(col)
+        except:
+            category_X.append(col)
+    print('-'*40)
+    print('总计%s个含编码类别特征:%s'%(len(encode_X),encode_X))
+    return numeric_X, category_X
 
 
 class FeatureLabelSizeRatio():
@@ -143,47 +169,6 @@ class FeatureLabelSizeRatio():
             return counts_ratio, overlap
 
 
-def divide_x_dtype(df):
-    """
-    划分变量数据类型
-    注：缺失值需为np.nan
-    """
-    int_X=[]
-    float_X=[]
-    category_X=[]
-    for i,ds in df.iteritems():
-        ds = ds[ds.notnull()]
-        try:
-            ds = ds.apply(float)
-        except:
-            category_X.append(i)
-        finally:
-            if i not in category_X:
-                ds_re = ds.apply(lambda x: x%1)
-                if ds_re.max()==0:
-                    int_X.append(i)
-                else:
-                    float_X.append(i)
-    return {'int':int_X,'float':float_X,'category':category_X}
-
-def null_value_counts(df,value=0.9):
-    """
-    变量缺失值统计
-    缺失比例一般达到90%则可舍弃，也可以将值替换为有值(1)和空值(0)，继续作为特征
-    param:
-          df
-          value:阈值，返回缺失比例>=该值的特征名,默认0.1
-    return:
-          缺失统计表
-          比例较高特征列表
-    """
-    df_null=df.isnull().sum().sort_values(ascending=False)
-    df_null_percent=df_null/df.shape[0]
-    null_df=pd.concat([df_null,df_null_percent],axis=1)
-    null_df.rename(columns={0:'null_nums',1:'null_percent'},inplace=True)
-    null_df_style=null_df[null_df.null_nums>0]
-    return null_df_style.style.bar(), list(null_df[null_df.null_percent>=value].index)
-
 def vif_compute(data,index):
     '''方差膨胀因子(VIF)：大于10存在严重多重共线性
     data:frame 自变量
@@ -192,7 +177,7 @@ def vif_compute(data,index):
     return variance_inflation_factor(data.values, index)
 
 def feature_importance_ensemble(x_array,y_array,xName_list,n_estimators=100, max_depth=3,figsize=(22,8)):
-    '''集成模型特征重要性计算、排序和绘图'''
+    '''树模型特征重要性计算、排序和绘图'''
     xgbc = xgboost.XGBClassifier(n_estimators=n_estimators, max_depth=max_depth)
     lgbc = lightgbm.LGBMClassifier(n_estimators=n_estimators, max_depth=max_depth)
     rfc = ensemble.RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth)

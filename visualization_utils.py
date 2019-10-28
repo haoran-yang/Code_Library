@@ -6,6 +6,23 @@ import seaborn as sns
 import graphviz
 from sklearn import tree
 
+def target_dist_plot(data,target='target'):
+    '''二分类目标分布图,默认列名为target'''
+    plt.figure(figsize=(12,6))
+    g = sns.countplot(x=target, data=data)
+    g.set_title("TARGET DISTRIBUTION", fontsize = 20)
+    g.set_xlabel("Target Vaues", fontsize = 15)
+    g.set_ylabel("Count", fontsize = 15)
+    sizes=[] # Get highest values in y
+    for p in g.patches:
+        height = p.get_height()
+        sizes.append(height)
+        g.text(p.get_x()+p.get_width()/2.,
+                height + 3,
+                '{}, {:1.2f}%'.format(height,height/data.shape[0]*100),
+                ha="center", fontsize=16) 
+    g.set_ylim(0, max(sizes) * 1.15) # set y limit based on highest heights
+
 class SeabornPlot():
     def __init__(self):
         pass
