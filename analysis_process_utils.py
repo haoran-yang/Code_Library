@@ -12,6 +12,34 @@ import lightgbm
 from sklearn import ensemble
 from pyecharts import Bar,Line,Overlap,Grid,Page
 
+def reduce_mem_usage(df):
+    '''降低数据对内存占用'''
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    start_mem = df.memory_usage().sum() / 1024**2    
+    for col in df.columns:
+        col_type = df[col].dtypes
+        if col_type in numerics:
+            c_min = df[col].min()
+            c_max = df[col].max()
+            if str(col_type)[:3] == 'int':
+                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+                    df[col] = df[col].astype(np.int8)
+                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+                    df[col] = df[col].astype(np.int16)
+                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+                    df[col] = df[col].astype(np.int32)
+                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
+                    df[col] = df[col].astype(np.int64)  
+            else:
+                if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
+                    df[col] = df[col].astype(np.float16)
+                elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
+                    df[col] = df[col].astype(np.float32)
+                else:
+                    df[col] = df[col].astype(np.float64)    
+    end_mem = df.memory_usage().sum() / 1024**2
+    print('Memory usage decreased to {:5.2f} Mb ({:.1f}% reduction)'.format(end_mem, 100 * (start_mem - end_mem) / start_mem))
+    return df
 
 # 找出唯一取值列
 def one_unique_cols(data,cols=[]):
@@ -67,6 +95,7 @@ def divide_x_dtype(data):
         try:
             ser_t.apply(float)
             try:
+                # 首字符为'0'，字符长度>1(排除'0'取值)，字符中不含'.'(排除'0.0')
                 encode_nums = ((ser_t.str[:1]=='0')&(ser_t.str.len()>1)&(ser_t.apply(lambda x:False if '.' in x else True))).sum()
             except:
                 print('code error!')
@@ -82,6 +111,28 @@ def divide_x_dtype(data):
     print('总计%s个含编码类别特征:%s'%(len(encode_X),encode_X))
     return numeric_X, category_X
 
+def split_datetime(dt_ser,datetime_type=1):
+    '''拆分日期时间。
+    datetime_type:为"1"时，输入格式如"2019-01-18 21:03:46"
+                  为"2"时，输入格式如"20190118" '''
+    datimeElements = pd.DataFrame(index=dt_ser.index)
+    if dt_ser.dtype in ['float32','float64','int32','int64']:
+        print('The type must be object or datetime!')
+    else:
+        if dt_ser.dtype == 'object':
+            if datetime_type==1:
+                dt_ser = dt_ser.apply(lambda x:datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S'))
+            elif datetime_type==2:
+                dt_ser = dt_ser.apply(lambda x:datetime.datetime.strptime(x,'%Y%m%d'))
+        datimeElements['month'] = dt_ser.apply(lambda x:x.month)
+        datimeElements['day'] = dt_ser.apply(lambda x:x.day)
+        datimeElements['weekOfYear'] = dt_ser.apply(lambda x:x.week)
+        datimeElements['weekOfMth'] = dt_ser.apply(lambda x:(x.day - 1) // 7 + 1)
+        datimeElements['dayOfWeek'] = dt_ser.apply(lambda x:x.strftime('%w'))
+        if datetime_type==1:
+            datimeElements['hour'] = dt_ser.apply(lambda x:x.hour)
+            datimeElements['minute'] = dt_ser.apply(lambda x:x.minute)
+    return datimeElements
 
 class FeatureLabelSizeRatio():
     '''单个特征按label统计'''

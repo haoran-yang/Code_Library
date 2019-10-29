@@ -5,6 +5,40 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import graphviz
 from sklearn import tree
+mpl.rcParams['font.family']='DFKai-SB'#修改了全局变量,seaborn显示中文
+
+def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'}):
+    '''单个类别特征分布图(二分类)'''
+    data[y] = data[y].apply(lambda x:int(float(x)))
+    tmp = pd.crosstab(data[x], data[y], normalize='index') * 100
+    tmp = tmp.reset_index()
+    tmp.rename(columns=rename, inplace=True)
+
+    plt.figure(figsize=(16,6))
+    plt.suptitle(x+' Distributions', fontsize=22)
+
+    plt.subplot(121)
+    g = sns.countplot(x=x, data=data)
+    g.set_title(x+" Distribution", fontsize=19)
+    g.set_xlabel(x+" Name", fontsize=17)
+    g.set_ylabel("Count", fontsize=17)
+    g.set_ylim(0,max([p.get_height() for p in g.patches])*1.2)
+    for p in g.patches:
+        height = p.get_height()
+        g.text(p.get_x()+p.get_width()/2.,
+                height + 3,
+                '{:1.2f}%\n{}'.format(height/data.shape[0]*100,height),
+                ha="center", fontsize=14) 
+    plt.subplot(122)
+    g1 = sns.countplot(x=x, hue=y, data=data)
+    plt.legend(title=y, loc='best', labels=['No', 'Yes'])
+    gt = g1.twinx()
+    gt = sns.pointplot(x=x, y=rename[1], data=tmp, color='black', order=tmp[x].tolist(),legend=False)
+    gt.set_ylabel("% {} of Total".format(rename[1]), fontsize=16)
+    gt.set_ylim(0) # round(tmp[rename[1]].max()+1)
+    g1.set_title(x+" by Target({})".format(y), fontsize=19)
+    g1.set_xlabel(x+" Name", fontsize=17)
+    g1.set_ylabel("Count", fontsize=17)
 
 def target_dist_plot(data,target='target'):
     '''二分类目标分布图,默认列名为target'''
