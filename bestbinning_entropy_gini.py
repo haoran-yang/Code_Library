@@ -120,7 +120,7 @@ def calc_score_median(sample_set, var):
         var_median_list.append(var_median)
     return var_median_list
 
-def choose_best_split(sample_set, var, min_sample):
+def choose_best_split(sample_set, var, target,min_sample):
     '''
     使用CART分类决策树选择最好的样本切分点
     返回切分点
@@ -132,7 +132,7 @@ def choose_best_split(sample_set, var, min_sample):
     score_median_list = calc_score_median(sample_set, var)
     median_len = len(score_median_list)
     sample_cnt = sample_set.shape[0]
-    sample1_cnt = sum(sample_set['target'])
+    sample1_cnt = sum(sample_set[target])
     sample0_cnt =  sample_cnt- sample1_cnt
     Gini = 1 - np.square(sample1_cnt / sample_cnt) - np.square(sample0_cnt / sample_cnt)
 
@@ -142,7 +142,7 @@ def choose_best_split(sample_set, var, min_sample):
         right = sample_set[sample_set[var] > score_median_list[i]]
 
         left_cnt = left.shape[0]; right_cnt = right.shape[0]
-        left1_cnt = sum(left['target']); right1_cnt = sum(right['target'])
+        left1_cnt = sum(left[target]); right1_cnt = sum(right[target])
         left0_cnt =  left_cnt - left1_cnt; right0_cnt =  right_cnt - right1_cnt
         left_ratio = left_cnt / sample_cnt; right_ratio = right_cnt / sample_cnt
 
@@ -162,7 +162,7 @@ def choose_best_split(sample_set, var, min_sample):
     Gini = Gini - bestGini
     return bestSplit_point, bestSplit_position
 
-def bining_data_split(sample_set, var, min_sample, split_list):
+def bining_data_split(sample_set, var, target, min_sample, split_list):
     '''
     划分数据找到最优分割点list
     param sample_set: 待切分样本
@@ -170,7 +170,7 @@ def bining_data_split(sample_set, var, min_sample, split_list):
     param min_sample: 待切分样本的最小样本量(限制条件)
     param split_list: 最优分割点list
     '''
-    split, position = choose_best_split(sample_set, var, min_sample)
+    split, position = choose_best_split(sample_set, var,target, min_sample)
     if split != 0.0:
         split_list.append(split)
     # 根据分割点划分数据集，继续进行划分
@@ -178,79 +178,100 @@ def bining_data_split(sample_set, var, min_sample, split_list):
     sample_set_right = sample_set[sample_set[var] > split]
     # 如果左子树样本量超过2倍最小样本量，且分割点不是第一个分割点，则切分左子树
     if len(sample_set_left) >= min_sample * 2 and position not in [0.0, 1.0]:
-        bining_data_split(sample_set_left, var, min_sample, split_list)
+        bining_data_split(sample_set_left, var, target, min_sample, split_list)
     else:
         None
     # 如果右子树样本量超过2倍最小样本量，且分割点不是最后一个分割点，则切分右子树
     if len(sample_set_right) >= min_sample * 2 and position not in [0.0, 1.0]:
-        bining_data_split(sample_set_right, var, min_sample, split_list)
+        bining_data_split(sample_set_right, var, target, min_sample, split_list)
     else:
         None
 
-def get_bestsplit_list(sample_set, var):
+def get_bestsplit_list(sample_set, var, target,threshold=0.05):
     '''
     根据分箱得到最优分割点list
     param sample_set: 待切分样本
     param var: 分割变量名称
+    target:目标变量名
+    threshold:最小样本阈值，默认0.05
     '''
     # 计算最小样本阈值（终止条件）
-    min_df = sample_set.shape[0] * 0.05
+    min_df = int(sample_set.shape[0] * threshold)
+    print('min sample split is %s'%min_df)
     split_list = []
     # 计算第一个和最后一个分割点
-    bining_data_split(sample_set, var, min_df, split_list)
+    bining_data_split(sample_set, var, target, min_df, split_list)
     return split_list
 
 
-# 方案三。R最优分箱。
-"""library(grid)
+# 方案三。R smbinning最优分箱。
+"""
+# 加载所需库
+library(grid)
 library(partykit)
 library(libcoin)
 # library(mvnorm)
 library(rpart)
 library(Formula)
 library(smbinning)
-setwd("D:\\三方数据测试\\电话邦_凭安建模测试")
-dat = read.csv('pinan_toR.txt',sep='~',header = T)
+setwd("F:\\欺诈模型")
 
-dat$y = as.numeric(as.character(dat$y))
+# 读入数据
+dat = read.csv('numb_datas_for_Rbinning.txt',sep='~',header = T)  
 
-d = list()
-for(i in names(dat)[14:117])  {
-  tem1 = dat[dat[,i]!=-99999,]
-  tem2 = dat[(dat[,i]!=-99999)&(dat[,i]!=0),]
-  print(i)
-  if("出现错误" %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),
-                          error=function(e){print("出现错误")} )) next
-  if("try-error" %in% class(try(smbinning(df = tem1,y='y',x=i,p=0.1)$ivtable,silent = TRUE))){
-    print('try-error')
-    result = smbinning(df = tem2,y='y',x=i,p=0.1)
-    x.inv = try(result$ivtable,silent = TRUE)
-    if("try-error" %in% class(x.inv)) next
-    # print(result$cuts) 
-    d[[i]] <- paste(c(0,result$cuts),collapse=",")
-    
-  }else{
-    result = smbinning(df = tem1,y='y',x=i,p=0.1)
-    x.inv = try(result$ivtable,silent = TRUE)
-    if("try-error" %in% class(x.inv)) next
-    # print(result$ivtable)
-    # print(result$cuts)  
-    d[[i]] <- paste(result$cuts,collapse=",")
-  }
+# 定义最小划分阈值
+p_val = 0.008
+# 指定目标名
+target = 'y_m3Worse'
+
+# 目标列"y"转换为整数型,y取值需为0,1
+dat[,target] = as.numeric(as.character(dat[,target])) 
+
+d = list()  # 定义存储分割点列表
+nms = names(dat)
+for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1:4]
+    tem1 = dat[dat[, i] != -99999, ]  # 缺失值为-99999，包含0
+    tem2 = dat[(dat[, i] != -99999) & (dat[, i] != 0), ]  # 缺失值为-99999，不含0
+    print(i)  # 打印列名
+    if ("出现错误" %in% tryCatch(smbinning(df = tem1, y = target, x = i, p = p_val), error = function(e) {
+        print("出现错误")
+    })) 
+        next # 跳出循环
+    if ("try-error" %in% class(try(smbinning(df = tem1, y = target, x = i, p = p_val)$ivtable, 
+        silent = TRUE))) {
+        print("try-error")
+        result = smbinning(df = tem2, y = target, x = i, p = p_val)
+        x.inv = try(result$ivtable, silent = TRUE)
+        if ("try-error" %in% class(x.inv)) 
+            next # 跳出循环
+        # print(result$cuts)
+        d[[i]] <- paste(c(0, result$cuts), collapse = ",")
+        
+    } else { 
+        result = smbinning(df = tem1, y = target, x = i, p = p_val)
+        x.inv = try(result$ivtable, silent = TRUE)
+        if ("try-error" %in% class(x.inv)) 
+            next # 跳出循环
+        # print(result$ivtable) print(result$cuts)
+        d[[i]] <- paste(result$cuts, collapse = ",")
+    }
 }
-
-write.table(data.frame(d),'pinan_smbinning.txt',sep = '~')
+write.table(data.frame(d),'R_smbinning.txt',sep = '~')  # 保存分箱点到本地
 
 # smbinning.plot(result,options = 'WoE',sub = 'CreditAmount')
-for(i in names(dat)[3:79])  {
-  print(i)
-  #if("出现错误" %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),warning = function(w){print("出现警告")},error=function(e){print("出现错误")} )) next
-  if("出现错误" %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),
-                          error=function(e){print("出现错误")} )) next
-  result = smbinning(df = tem1,y='y',x=i,p=0.1)
-  x.inv = try(result$ivtable,silent = TRUE)
-  if("try-error" %in% class(x.inv)) next
-  # print(result$ivtable)
-  print(result$cuts)
+for (i in names(dat)[0:1]) {
+    print(i)
+    # if('出现错误' %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),warning =
+    # function(w){print('出现警告')},error=function(e){print('出现错误')} )) next
+    if ("出现错误" %in% tryCatch(smbinning(df = tem1, y = target, x = i, p = 0.1), error = function(e) {
+        print("出现错误")
+    })) 
+        next
+    result = smbinning(df = tem1, y = target, x = i, p = 0.1)
+    x.inv = try(result$ivtable, silent = TRUE)
+    if ("try-error" %in% class(x.inv)) 
+        next
+    # print(result$ivtable)
+    print(result$cuts)
 }
 """

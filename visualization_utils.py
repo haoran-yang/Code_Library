@@ -7,8 +7,39 @@ import graphviz
 from sklearn import tree
 mpl.rcParams['font.family']='DFKai-SB'#修改了全局变量,seaborn显示中文
 
-def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'}):
-    '''单个类别特征分布图(二分类)'''
+def dist_numb_target(data,x,y,bins=None,hist=True,xlim=None):
+    '''单个连续特征分布图(二分类),y取值类型需为int型0,1'''
+    plt.figure(figsize=(24,6))
+    plt.suptitle("Frequency of "+x, fontsize=22)
+    plt.subplot(131)
+    g = sns.distplot(data[data[x].notnull()][x].apply(float),bins=bins,hist=hist)
+    if xlim is not None:
+        plt.xlim(xlim[0],xlim[1])
+    g.set_title("frequency", fontsize=22)
+    g.set_xlabel(x+" values", fontsize=18)
+    g.set_ylabel("Density", fontsize=18)
+    plt.subplot(132)
+    sns.distplot(data[(data[x].notnull())&(data[y]==1)][x].apply(float), bins=bins,hist=False,label='YES')
+    g2 = sns.distplot(data[(data[x].notnull())&(data[y]==0)][x].apply(float), bins=bins,hist=False,label='NO')
+    plt.legend(title=y,loc='best')
+    if xlim is not None:
+        plt.xlim(xlim[0],xlim[1])
+    g2.set_ylabel("Density", fontsize=18)
+    g2.set_title(x+' by Target({})'.format(y), fontsize=22)
+    g2.set_xlabel(x+" values", fontsize=18)
+    plt.subplot(133)
+    data_tmp = data[[x,y]].copy()
+    data_tmp[x] = data_tmp[x].astype(float)
+    g3 = sns.boxenplot(x=y, y=x, data=data_tmp)
+    if xlim is not None:
+        plt.ylim(xlim[0],xlim[1])
+    g3.set_title(x+" Boxenplot by "+y, fontsize=20)
+    g3.set_xlabel(y, fontsize=17)
+    g3.set_ylabel(x+" Values", fontsize=17)
+    plt.subplots_adjust(hspace = 0.6, top = 0.85)
+
+def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
+    '''单个类别特征分布绘图(二分类)'''
     data[y] = data[y].apply(lambda x:int(float(x)))
     tmp = pd.crosstab(data[x], data[y], normalize='index') * 100
     tmp = tmp.reset_index()
@@ -33,12 +64,14 @@ def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'}):
     g1 = sns.countplot(x=x, hue=y, data=data)
     plt.legend(title=y, loc='best', labels=['No', 'Yes'])
     gt = g1.twinx()
-    gt = sns.pointplot(x=x, y=rename[1], data=tmp, color='black', order=tmp[x].tolist(),legend=False)
+    gt = sns.pointplot(x=x, y=rename[1], data=tmp, color='black',order=[i.get_text() for i in g1.get_xticklabels()],legend=False) # 按主轴标签排序
     gt.set_ylabel("% {} of Total".format(rename[1]), fontsize=16)
     gt.set_ylim(0) # round(tmp[rename[1]].max()+1)
     g1.set_title(x+" by Target({})".format(y), fontsize=19)
     g1.set_xlabel(x+" Name", fontsize=17)
     g1.set_ylabel("Count", fontsize=17)
+    if return_tmp:
+        return tmp
 
 def target_dist_plot(data,target='target'):
     '''二分类目标分布图,默认列名为target'''
