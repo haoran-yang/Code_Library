@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import graphviz
 from sklearn import tree
+from matplotlib import gridspec
 mpl.rcParams['font.family']='DFKai-SB'#修改了全局变量,seaborn显示中文
 
 def dist_numb_target(data,x,y,bins=None,hist=True,xlim=None):
@@ -72,6 +73,41 @@ def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
     g1.set_ylabel("Count", fontsize=17)
     if return_tmp:
         return tmp
+
+def ploting_cat_fet(data, cols, target='target', vis_row=5, vis_col=2,figsize=(14, 6)):
+    '''多特征目标target正类比例'''
+    grid = gridspec.GridSpec(vis_row,vis_col) # The grid of chart
+    plt.figure(figsize=figsize) # size of figure
+
+    # loop to get column and the count of plots
+    for n, col in enumerate(data[cols]): 
+        tmp = pd.crosstab(data[col], data[target], normalize='index') * 100
+        tmp = tmp.reset_index()
+        tmp.rename(columns={0:'No',1:'Yes'}, inplace=True)
+
+        ax = plt.subplot(grid[n]) # feeding the figure of grid
+        sns.countplot(x=col, data=data, order=list(tmp[col].values) , color='green') 
+        ax.set_ylabel('Count', fontsize=15) # y axis label
+        ax.set_title(f'{col} Distribution by Target', fontsize=18) # title label
+        ax.set_xlabel(f'{col} values', fontsize=15) # x axis label
+
+        # twinX - to build a second yaxis
+        gt = ax.twinx()
+        gt = sns.pointplot(x=col, y='Yes', data=tmp,
+                           order=list(tmp[col].values),
+                           color='black', legend=False)
+        gt.set_ylim(tmp['Yes'].min()-5,tmp['Yes'].max()*1.1)
+        gt.set_ylabel("Target %True(1)", fontsize=16)
+        sizes=[] # Get highest values in y
+        for p in ax.patches: # loop to all objects
+            height = p.get_height()
+            sizes.append(height)
+            ax.text(p.get_x()+p.get_width()/2.,
+                    height + 3,
+                    '{:1.2f}%'.format(height/data.shape[0]*100),
+                    ha="center", fontsize=14) 
+        ax.set_ylim(0, max(sizes) * 1.15) # set y limit based on highest heights
+    plt.subplots_adjust(hspace = 0.5, wspace=.3)
 
 def target_dist_plot(data,target='target'):
     '''二分类目标分布图,默认列名为target'''
