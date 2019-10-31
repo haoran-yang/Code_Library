@@ -187,16 +187,19 @@ def bining_data_split(sample_set, var, target, min_sample, split_list):
     else:
         None
 
-def get_bestsplit_list(sample_set, var, target,threshold=0.05):
+def get_bestsplit_list(sample_set, var, target, threshold=0.05):
     '''
     根据分箱得到最优分割点list
     param sample_set: 待切分样本
     param var: 分割变量名称
     target:目标变量名
-    threshold:最小样本阈值，默认0.05
+    threshold:最小样本阈值，默认0.05，可取整数
     '''
     # 计算最小样本阈值（终止条件）
-    min_df = int(sample_set.shape[0] * threshold)
+    if threshold<1:
+        min_df = int(sample_set.shape[0] * threshold)
+    else:
+        min_df = threshold
     print('min sample split is %s'%min_df)
     split_list = []
     # 计算第一个和最后一个分割点
@@ -229,7 +232,7 @@ dat[,target] = as.numeric(as.character(dat[,target]))
 
 d = list()  # 定义存储分割点列表
 nms = names(dat)
-for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1:4]
+for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1:4], c('car_loan','age','income')
     tem1 = dat[dat[, i] != -99999, ]  # 缺失值为-99999，包含0
     tem2 = dat[(dat[, i] != -99999) & (dat[, i] != 0), ]  # 缺失值为-99999，不含0
     print(i)  # 打印列名
@@ -241,6 +244,7 @@ for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1
         silent = TRUE))) {
         print("try-error")
         result = smbinning(df = tem2, y = target, x = i, p = p_val)
+        print('tem2')
         x.inv = try(result$ivtable, silent = TRUE)
         if ("try-error" %in% class(x.inv)) 
             next # 跳出循环
@@ -249,6 +253,7 @@ for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1
         
     } else { 
         result = smbinning(df = tem1, y = target, x = i, p = p_val)
+        print('tem1')
         x.inv = try(result$ivtable, silent = TRUE)
         if ("try-error" %in% class(x.inv)) 
             next # 跳出循环
@@ -256,6 +261,7 @@ for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1
         d[[i]] <- paste(result$cuts, collapse = ",")
     }
 }
+print(d)
 write.table(data.frame(d),'R_smbinning.txt',sep = '~')  # 保存分箱点到本地
 
 # smbinning.plot(result,options = 'WoE',sub = 'CreditAmount')

@@ -9,6 +9,13 @@ import math
 from collections import Counter
 from pyecharts import Bar,Line,Overlap,Grid,Page
 
+def build_cross_feats(data,cols):
+    '''两两特征交叉,cols为特征名列表'''
+    cross_dfs = pd.DataFrame(index=data.index)
+    for i in range(len(cols)-1):
+        for j in range(i+1,len(cols)):
+            cross_dfs[cols[i]+'_'+cols[j]] = data[cols[i]]+'_'+datas[cols[j]]
+    return cross_dfs
 
 class FeatureLabelSizeRatio():
     '''单个特征按label统计'''

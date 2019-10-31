@@ -41,6 +41,8 @@ def dist_numb_target(data,x,y,bins=None,hist=True,xlim=None):
 
 def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
     '''单个类别特征分布绘图(二分类)'''
+    if data[x].dtype != 'category':
+        data[x] = data[x].astype(str)
     data[y] = data[y].apply(lambda x:int(float(x)))
     tmp = pd.crosstab(data[x], data[y], normalize='index') * 100
     tmp = tmp.reset_index()
@@ -65,7 +67,14 @@ def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
     g1 = sns.countplot(x=x, hue=y, data=data)
     plt.legend(title=y, loc='best', labels=['No', 'Yes'])
     gt = g1.twinx()
-    gt = sns.pointplot(x=x, y=rename[1], data=tmp, color='black',order=[i.get_text() for i in g1.get_xticklabels()],legend=False) # 按主轴标签排序
+    order = [i.get_text() for i in g1.get_xticklabels()] # get_text将类别值转换成了字符串
+    if data[x].dtype == 'category': 
+        for x_val in range(len(order)):
+            if order[x_val] != str(tmp.iloc[:,0].tolist()[x_val]):
+                print('Feature Order Wrong!')
+                break
+        order = None
+    gt = sns.pointplot(x=x, y=rename[1], data=tmp, color='black',order=order,legend=False) # 按主轴排序
     gt.set_ylabel("% {} of Total".format(rename[1]), fontsize=16)
     gt.set_ylim(0) # round(tmp[rename[1]].max()+1)
     g1.set_title(x+" by Target({})".format(y), fontsize=19)
