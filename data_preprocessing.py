@@ -14,8 +14,8 @@ def build_cross_feats(data,cols):
     cross_dfs = pd.DataFrame(index=data.index)
     for i in range(len(cols)-1):
         for j in range(i+1,len(cols)):
-            cross_dfs[cols[i]+'_'+cols[j]] = data[cols[i]]+'_'+datas[cols[j]]
-    return cross_dfs
+            cross_dfs[cols[i]+'_'+cols[j]] = data[cols[i]]+'_'+data[cols[j]]
+    return cross_dfs.fillna('nan_nan')
 
 class FeatureLabelSizeRatio():
     '''单个特征按label统计'''

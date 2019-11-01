@@ -187,7 +187,7 @@ def bining_data_split(sample_set, var, target, min_sample, split_list):
     else:
         None
 
-def get_bestsplit_list(sample_set, var, target, threshold=0.05):
+def get_bestsplit_list(sample_set, var, target,threshold=0.05,sort=False,for_cut=False):
     '''
     根据分箱得到最优分割点list
     param sample_set: 待切分样本
@@ -204,6 +204,12 @@ def get_bestsplit_list(sample_set, var, target, threshold=0.05):
     split_list = []
     # 计算第一个和最后一个分割点
     bining_data_split(sample_set, var, target, min_df, split_list)
+    if split_list:
+        if sort:
+            split_list.sort()
+        if for_cut and sort:
+            split_list.insert(0,float('-inf'))
+            split_list.append(float('inf'))
     return split_list
 
 

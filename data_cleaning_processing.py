@@ -11,7 +11,7 @@ import xgboost
 import lightgbm
 from sklearn import ensemble
 from pyecharts import Bar,Line,Overlap,Grid,Page
-
+from scipy import stats
 
 def resumetable(df):
     '''了解数据'''
@@ -110,18 +110,21 @@ def divide_x_dtype(data):
     for col,ser in data.iteritems():
         ser_t = ser[ser.notnull()].astype(str)
         try:
-            ser_t.apply(float)
-            try:
-                # 首字符为'0'，字符长度>1(排除'0'取值)，字符中不含'.'(排除'0.0')
-                encode_nums = ((ser_t.str[:1]=='0')&(ser_t.str.len()>1)&(ser_t.apply(lambda x:False if '.' in x else True))).sum()
-            except:
-                print('code error!')
-            if encode_nums>0:
-                category_X.append(col)
-                encode_X.append(col)
-                print('%s 编码取值量:%s, 取值率:%.2f'%(col,encode_nums,encode_nums/len(ser_t)))
+            if ser_t.nunique()<=5:
+                category_X.append(col) # 取值数小于等于5划入类别特征
             else:
-                numeric_X.append(col)
+                ser_t.apply(float)
+                try:
+                    # 首字符为'0'，字符长度>1(排除'0'取值)，字符中不含'.'(排除'0.0')
+                    encode_nums = ((ser_t.str[:1]=='0')&(ser_t.str.len()>1)&(ser_t.apply(lambda x:False if '.' in x else True))).sum()
+                except:
+                    print('code error!')
+                if encode_nums>0:
+                    category_X.append(col)
+                    encode_X.append(col)
+                    print('%s 编码取值量:%s, 取值率:%.2f'%(col,encode_nums,encode_nums/len(ser_t)))
+                else:
+                    numeric_X.append(col)
         except:
             category_X.append(col)
     print('-'*40)

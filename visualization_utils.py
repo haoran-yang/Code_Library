@@ -20,8 +20,8 @@ def dist_numb_target(data,x,y,bins=None,hist=True,xlim=None):
     g.set_xlabel(x+" values", fontsize=18)
     g.set_ylabel("Density", fontsize=18)
     plt.subplot(132)
-    sns.distplot(data[(data[x].notnull())&(data[y]==1)][x].apply(float), bins=bins,hist=False,label='YES')
-    g2 = sns.distplot(data[(data[x].notnull())&(data[y]==0)][x].apply(float), bins=bins,hist=False,label='NO')
+    sns.distplot(data[(data[x].notnull())&(data[y]==1)][x].apply(float), bins=bins,hist=False,label='Yes')
+    g2 = sns.distplot(data[(data[x].notnull())&(data[y]==0)][x].apply(float), bins=bins,hist=False,label='No')
     plt.legend(title=y,loc='best')
     if xlim is not None:
         plt.xlim(xlim[0],xlim[1])
@@ -29,9 +29,7 @@ def dist_numb_target(data,x,y,bins=None,hist=True,xlim=None):
     g2.set_title(x+' by Target({})'.format(y), fontsize=22)
     g2.set_xlabel(x+" values", fontsize=18)
     plt.subplot(133)
-    data_tmp = data[[x,y]].copy()
-    data_tmp[x] = data_tmp[x].astype(float)
-    g3 = sns.boxenplot(x=y, y=x, data=data_tmp)
+    g3 = sns.boxenplot(x=y, y=x, data=data)
     if xlim is not None:
         plt.ylim(xlim[0],xlim[1])
     g3.set_title(x+" Boxenplot by "+y, fontsize=20)
@@ -41,7 +39,7 @@ def dist_numb_target(data,x,y,bins=None,hist=True,xlim=None):
 
 def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
     '''单个类别特征分布绘图(二分类)'''
-    if data[x].dtype != 'category':
+    if str(data[x].dtype) != 'category':
         data[x] = data[x].astype(str)
     data[y] = data[y].apply(lambda x:int(float(x)))
     tmp = pd.crosstab(data[x], data[y], normalize='index') * 100
@@ -68,7 +66,7 @@ def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
     plt.legend(title=y, loc='best', labels=['No', 'Yes'])
     gt = g1.twinx()
     order = [i.get_text() for i in g1.get_xticklabels()] # get_text将类别值转换成了字符串
-    if data[x].dtype == 'category': 
+    if str(data[x].dtype) == 'category': 
         for x_val in range(len(order)):
             if order[x_val] != str(tmp.iloc[:,0].tolist()[x_val]):
                 print('Feature Order Wrong!')
@@ -83,7 +81,7 @@ def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
     if return_tmp:
         return tmp
 
-def ploting_cat_fet(data, cols, target='target', vis_row=5, vis_col=2,figsize=(14, 6)):
+def ploting_cat_fets(data, cols, target='target', vis_row=5, vis_col=2,figsize=(14, 6)):
     '''多特征目标target正类比例'''
     grid = gridspec.GridSpec(vis_row,vis_col) # The grid of chart
     plt.figure(figsize=figsize) # size of figure
@@ -117,6 +115,34 @@ def ploting_cat_fet(data, cols, target='target', vis_row=5, vis_col=2,figsize=(1
                     ha="center", fontsize=14) 
         ax.set_ylim(0, max(sizes) * 1.15) # set y limit based on highest heights
     plt.subplots_adjust(hspace = 0.5, wspace=.3)
+
+def ploting_numb_fets(data, cols, target='target', vis_row=5, vis_col=2, draw_type='dist_y',figsize=(14, 6),bins=50):
+    '''多连续特征分布,参数draw_type:绘图类型,取值：dist_y(按y分布图),dist(分布图),box_y(按y增强箱形图),box(增强箱形图)'''
+    grid = gridspec.GridSpec(vis_row,vis_col) # The grid of chart
+    plt.figure(figsize=figsize) # size of figure
+    suptitle = "Frequency" if draw_type=='dist' else f"Frequency by {target}" if draw_type=='dist_y' else f"Boxenplot by {target}" if draw_type=='box_y' \
+                else 'Boxenplot'
+    plt.suptitle(suptitle, fontsize=22)
+    # loop to get column and the count of plots
+    for n, col in enumerate(data[cols]): 
+        ax = plt.subplot(grid[n]) # feeding the figure of grid
+        if draw_type=='dist_y':
+            sns.distplot(data[(data[col].notnull())&(data[target]==1)][col].apply(float), bins=bins,hist=False,label='Yes')
+            sns.distplot(data[(data[col].notnull())&(data[target]==0)][col].apply(float), bins=bins,hist=False,label='No')
+            ax.set_ylabel('Density', fontsize=13) 
+        elif draw_type == 'dist':
+            sns.distplot(data[data[col].notnull()][col].apply(float),bins=bins,hist=False)
+        elif draw_type == 'box_y':
+            sns.boxenplot(x=target, y=col, data=data)
+        elif draw_type == 'box':
+            sns.boxenplot(y=col, data=data)
+        else:
+            print('Wrong draw type!')
+            break
+        ax.set_title(col, fontsize=16)
+        ax.set_ylabel(f"{col}" if draw_type in ['box_y','box'] else "Density", fontsize=13)
+        ax.set_xlabel(f'{target}' if draw_type in ['box_y','box'] else '',fontsize=12)
+    plt.subplots_adjust(hspace = 0.5, wspace=.3) # 图间间隔
 
 def target_dist_plot(data,target='target'):
     '''二分类目标分布图,默认列名为target'''
