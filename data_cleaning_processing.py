@@ -20,7 +20,7 @@ def resumetable(df):
     summary = summary.reset_index()
     summary['Name'] = summary['index']
     summary = summary[['Name','dtypes']]
-    summary['Missing'] = df.isnull().sum().values    
+    summary['Missing'] = df.isnull().sum().values
     summary['Uniques'] = df.nunique().values
     summary['First Value'] = df.loc[0].values
     summary['Second Value'] = df.loc[1].values

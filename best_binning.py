@@ -187,6 +187,7 @@ def bining_data_split(sample_set, var, target, min_sample, split_list):
     else:
         None
 
+
 def get_bestsplit_list(sample_set, var, target,threshold=0.05,sort=False,for_cut=False):
     '''
     根据分箱得到最优分割点list
@@ -194,6 +195,7 @@ def get_bestsplit_list(sample_set, var, target,threshold=0.05,sort=False,for_cut
     param var: 分割变量名称
     target:目标变量名
     threshold:最小样本阈值，默认0.05，可取整数
+    注: 在数据量较大时运行仍很慢，为避免长时间等待需配合超时函数使用。或者采用R最优分箱、手动分箱。
     '''
     # 计算最小样本阈值（终止条件）
     if threshold<1:

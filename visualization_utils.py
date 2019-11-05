@@ -161,6 +161,34 @@ def target_dist_plot(data,target='target'):
                 ha="center", fontsize=16) 
     g.set_ylim(0, max(sizes) * 1.15) # set y limit based on highest heights
 
+def dist_target_detail(data,x,target,xlim=[]):
+    '''单个特征分布图，手动分箱可用'''
+    a = sns.FacetGrid(data, hue = target, aspect=4)
+    a.map(sns.kdeplot, x, shade=True)  # sns.countplot
+    if not xlim:
+        xlim = [data[x].min(),data[x].max()]
+    a.set(xlim=(xlim[0],xlim[1]))
+    a.add_legend()
+
+#correlation heatmap of dataset
+def correlation_heatmap(df):
+    '''相关性热力图'''
+    _ , ax = plt.subplots(figsize =(14, 12))
+    colormap = sns.diverging_palette(220, 10, as_cmap = True)
+    
+    _ = sns.heatmap(
+        df.corr(), 
+        cmap = colormap,
+        square=True, 
+        cbar_kws={'shrink':.9 }, 
+        ax=ax,
+        annot=True, 
+        linewidths=0.1,vmax=1.0, linecolor='white',
+        annot_kws={'fontsize':12 }
+    )
+    
+    plt.title('Pearson Correlation of Features', y=1.05, size=15)
+
 class SeabornPlot():
     def __init__(self):
         pass
