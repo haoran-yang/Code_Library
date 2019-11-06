@@ -32,5 +32,5 @@ the code library for data science.
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20191106173251459.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hhb3Jhbl95YW5n,size_16,color_FFFFFF,t_70)
 ## 1.4 相关性
 ### 1.4.1 correlation_heatmap
-- 相关性热力图
+- Pearson相关性热力图
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20191106173853958.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hhb3Jhbl95YW5n,size_16,color_FFFFFF,t_70)
