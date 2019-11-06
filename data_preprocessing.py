@@ -123,3 +123,11 @@ class FeatureLabelSizeRatio():
             woe=math.log(rate,math.e)
             woe_dic[x_values[i]]=woe
         return woe_dic
+
+def cycle_time_encode(data,cols):
+    '''循环特征编码。对于月份、天，这种首尾相连的闭环特征，可以用正弦余弦来编码。'''
+    data_t = data[cols].copy(deep=True)
+    for col in cols:
+        data_t[col+'_sin']=np.sin((2*np.pi*data_t[col])/max(data_t[col]))
+        data_t[col+'_cos']=np.cos((2*np.pi*data_t[col])/max(data_t[col]))
+    return data_t.drop(columns=cols)

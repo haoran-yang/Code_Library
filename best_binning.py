@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import copy
-
+from func_timeout import func_set_timeout, FunctionTimedOut # 超时设置函数
 
 #方案一
 class EntropyGiniBinning():
@@ -187,7 +187,7 @@ def bining_data_split(sample_set, var, target, min_sample, split_list):
     else:
         None
 
-
+@func_set_timeout(60) # 超时设置60秒
 def get_bestsplit_list(sample_set, var, target,threshold=0.05,sort=False,for_cut=False):
     '''
     根据分箱得到最优分割点list
@@ -214,78 +214,83 @@ def get_bestsplit_list(sample_set, var, target,threshold=0.05,sort=False,for_cut
             split_list.append(float('inf'))
     return split_list
 
+if __name__ == "__main__":
+    try:
+        py_bins = get_bestsplit_list(sample_set=data,target=target,var=col,threshold=0.05,sort=False,for_cut=False)
+    except FunctionTimedOut as e:
+        print('python gini分箱超时.')
 
-# 方案三。R smbinning最优分箱。
-"""
-# 加载所需库
-library(grid)
-library(partykit)
-library(libcoin)
-# library(mvnorm)
-library(rpart)
-library(Formula)
-library(smbinning)
-setwd("F:\\欺诈模型")
+    # 方案三。R smbinning最优分箱。
+    """
+    # 加载所需库
+    library(grid)
+    library(partykit)
+    library(libcoin)
+    # library(mvnorm)
+    library(rpart)
+    library(Formula)
+    library(smbinning)
+    setwd("F:\\欺诈模型")
 
-# 读入数据
-dat = read.csv('numb_datas_for_Rbinning.txt',sep='~',header = T)  
+    # 读入数据
+    dat = read.csv('numb_datas_for_Rbinning.txt',sep='~',header = T)  
 
-# 定义最小划分阈值
-p_val = 0.008
-# 指定目标名
-target = 'y_m3Worse'
+    # 定义最小划分阈值
+    p_val = 0.008
+    # 指定目标名
+    target = 'y_m3Worse'
 
-# 目标列"y"转换为整数型,y取值需为0,1
-dat[,target] = as.numeric(as.character(dat[,target])) 
+    # 目标列"y"转换为整数型,y取值需为0,1
+    dat[,target] = as.numeric(as.character(dat[,target])) 
 
-d = list()  # 定义存储分割点列表
-nms = names(dat)
-for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1:4], c('car_loan','age','income')
-    tem1 = dat[dat[, i] != -99999, ]  # 缺失值为-99999，包含0
-    tem2 = dat[(dat[, i] != -99999) & (dat[, i] != 0), ]  # 缺失值为-99999，不含0
-    print(i)  # 打印列名
-    if ("出现错误" %in% tryCatch(smbinning(df = tem1, y = target, x = i, p = p_val), error = function(e) {
-        print("出现错误")
-    })) 
-        next # 跳出循环
-    if ("try-error" %in% class(try(smbinning(df = tem1, y = target, x = i, p = p_val)$ivtable, 
-        silent = TRUE))) {
-        print("try-error")
-        result = smbinning(df = tem2, y = target, x = i, p = p_val)
-        print('tem2')
-        x.inv = try(result$ivtable, silent = TRUE)
-        if ("try-error" %in% class(x.inv)) 
+    d = list()  # 定义存储分割点列表
+    nms = names(dat)
+    for (i in nms[-which(nms==target)]) {# 遍历需要分箱的列名, names(dat)[1:4], c('car_loan','age','income')
+        tem1 = dat[dat[, i] != -99999, ]  # 缺失值为-99999，包含0
+        tem2 = dat[(dat[, i] != -99999) & (dat[, i] != 0), ]  # 缺失值为-99999，不含0
+        print(i)  # 打印列名
+        if ("出现错误" %in% tryCatch(smbinning(df = tem1, y = target, x = i, p = p_val), error = function(e) {
+            print("出现错误")
+        })) 
             next # 跳出循环
-        # print(result$cuts)
-        d[[i]] <- paste(c(0, result$cuts), collapse = ",")
-        
-    } else { 
-        result = smbinning(df = tem1, y = target, x = i, p = p_val)
-        print('tem1')
-        x.inv = try(result$ivtable, silent = TRUE)
-        if ("try-error" %in% class(x.inv)) 
-            next # 跳出循环
-        # print(result$ivtable) print(result$cuts)
-        d[[i]] <- paste(result$cuts, collapse = ",")
+        if ("try-error" %in% class(try(smbinning(df = tem1, y = target, x = i, p = p_val)$ivtable, 
+            silent = TRUE))) {
+            print("try-error")
+            result = smbinning(df = tem2, y = target, x = i, p = p_val)
+            print('tem2')
+            x.inv = try(result$ivtable, silent = TRUE)
+            if ("try-error" %in% class(x.inv)) 
+                next # 跳出循环
+            # print(result$cuts)
+            d[[i]] <- paste(c(0, result$cuts), collapse = ",")
+            
+        } else { 
+            result = smbinning(df = tem1, y = target, x = i, p = p_val)
+            print('tem1')
+            x.inv = try(result$ivtable, silent = TRUE)
+            if ("try-error" %in% class(x.inv)) 
+                next # 跳出循环
+            # print(result$ivtable) print(result$cuts)
+            d[[i]] <- paste(result$cuts, collapse = ",")
+        }
     }
-}
-print(d)
-write.table(data.frame(d),'R_smbinning.txt',sep = '~')  # 保存分箱点到本地
+    print(d)
+    write.table(data.frame(d),'R_smbinning.txt',sep = '~')  # 保存分箱点到本地
 
-# smbinning.plot(result,options = 'WoE',sub = 'CreditAmount')
-for (i in names(dat)[0:1]) {
-    print(i)
-    # if('出现错误' %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),warning =
-    # function(w){print('出现警告')},error=function(e){print('出现错误')} )) next
-    if ("出现错误" %in% tryCatch(smbinning(df = tem1, y = target, x = i, p = 0.1), error = function(e) {
-        print("出现错误")
-    })) 
-        next
-    result = smbinning(df = tem1, y = target, x = i, p = 0.1)
-    x.inv = try(result$ivtable, silent = TRUE)
-    if ("try-error" %in% class(x.inv)) 
-        next
-    # print(result$ivtable)
-    print(result$cuts)
-}
-"""
+    # smbinning.plot(result,options = 'WoE',sub = 'CreditAmount')
+    for (i in names(dat)[0:1]) {
+        print(i)
+        # if('出现错误' %in% tryCatch(smbinning(df = tem1,y='y',x=i,p=0.1),warning =
+        # function(w){print('出现警告')},error=function(e){print('出现错误')} )) next
+        if ("出现错误" %in% tryCatch(smbinning(df = tem1, y = target, x = i, p = 0.1), error = function(e) {
+            print("出现错误")
+        })) 
+            next
+        result = smbinning(df = tem1, y = target, x = i, p = 0.1)
+        x.inv = try(result$ivtable, silent = TRUE)
+        if ("try-error" %in% class(x.inv)) 
+            next
+        # print(result$ivtable)
+        print(result$cuts)
+    }
+    """
