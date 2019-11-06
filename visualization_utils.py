@@ -82,7 +82,7 @@ def dist_cate_target(data,x,y,rename={0:'good', 1:'bad'},return_tmp=False):
         return tmp
 
 def ploting_cat_fets(data, cols, target='target', vis_row=5, vis_col=2,figsize=(14, 6)):
-    '''多特征目标target正类比例'''
+    '''多特征目标target正类比例,y取值类型需为int型0,1'''
     grid = gridspec.GridSpec(vis_row,vis_col) # The grid of chart
     plt.figure(figsize=figsize) # size of figure
 
