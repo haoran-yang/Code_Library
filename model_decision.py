@@ -114,7 +114,7 @@ def kmeans(dataSet, k):
             #np.nonzero()[0]把所有为true的位置写出来
             #pointsInCluster = dataSet[np.nonzero(clusterAssment[:, 0] == j)[0]]  .A的作用目前不清楚，不加也一样
             #求每一类的中心店
-            centroids[j, :] = mean(pointsInCluster, axis = 0)
+            centroids[j, :] = np.mean(pointsInCluster, axis = 0)
             
     print('Congratulations, cluster complete!')
     return centroids, clusterAssment

@@ -170,12 +170,10 @@ def dist_target_detail(data,x,target,xlim=[]):
     a.set(xlim=(xlim[0],xlim[1]))
     a.add_legend()
 
-#correlation heatmap of dataset
-def correlation_heatmap(df):
+def correlation_heatmap(df,figsize=(10, 8)):
     '''相关性热力图'''
-    _ , ax = plt.subplots(figsize =(14, 12))
+    _ , ax = plt.subplots(figsize =figsize)
     colormap = sns.diverging_palette(220, 10, as_cmap = True)
-    
     _ = sns.heatmap(
         df.corr(), 
         cmap = colormap,
@@ -186,7 +184,6 @@ def correlation_heatmap(df):
         linewidths=0.1,vmax=1.0, linecolor='white',
         annot_kws={'fontsize':12 }
     )
-    
     plt.title('Pearson Correlation of Features', y=1.05, size=15)
 
 class SeabornPlot():
