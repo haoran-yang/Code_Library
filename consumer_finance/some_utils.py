@@ -50,6 +50,21 @@ def get_data_from_oracle(sql,configs=oracle_configs):
     dfs=pd.DataFrame(df,columns=[i[0].lower() for i in rx])
     return dfs
 
+def insert_data_to_oracle(sql,dataLst,configs=oracle_configs):
+    '''数据批量插入。
+    sql示例: INSERT INTO table_name(loan_no, fraudScore) VALUES(:loan_no,:fraudScore)
+    dataLst示例: [{'loan_no': '15000201801010475', 'fraudScore': '300'},
+                  {'loan_no': '15000201801010407', 'fraudScore': '40'}]
+    dataframe转换dataLst方式：[v for k,v in datas.T.to_dict().items()]
+    '''
+    oracle_tns = cx_Oracle.makedsn(oracle_configs.get('host'), oracle_configs.get('port'), oracle_configs.get('service_name'))
+    connectObj = cx_Oracle.connect(oracle_configs.get('username'), oracle_configs.get('password'), oracle_tns)
+    cursorObj = connectObj.cursor()
+    cursorObj.prepare(sql)
+    cursorObj.executemany(None, dataLst)
+    connectObj.commit()
+    cursorObj.close()
+
 def code_transform(data,sys_code):
     """码值转换"""
     replace_dict = {}
