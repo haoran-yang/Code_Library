@@ -5,23 +5,6 @@ import pymysql
 import cx_Oracle
 import math
 
-# 有利反欺诈库
-mysql_configs = {
-                'ip':'119.254.115.72',
-                'port':3307,
-                'user':'haoran.yang',
-                'password':'1qaz@wsx',
-                'dbname':'fri'
-                }
-# 快信消金库
-oracle_configs = {
-                'username': 'haoran_yang_pohoocredit',
-                'password': 'yhr12#',
-                'host': '10.30.4.26',
-                'port': '1521',
-                'service_name': 'odsdb'
-                }
-
 # 需要转换码值的字段
 trans_cols = ['cust_open_org', 'aprov_result', 'aprov_decision', 'is_insuuance', 'subj_id', 'is_attach', 'is_sa_rufuse', 'is_back_to_sa', 'is_back_to_check', 
               'chal_code', 'fund_channel','cert_type', 'chal_code', 'cust_type', 'sex', 'reg_type', 'is_reg_live', 'live_build_type', 
