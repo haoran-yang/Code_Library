@@ -10,7 +10,7 @@ trans_cols = ['cust_open_org', 'aprov_result', 'aprov_decision', 'is_insuuance',
               'chal_code', 'fund_channel','cert_type', 'chal_code', 'cust_type', 'sex', 'reg_type', 'is_reg_live', 'live_build_type', 
               'mth_tel_bill', 'is_real_name', 'mar_status', 'unit_type', 'industry', 'unit_scale', 'education', 'is_loaned', 'settle_type']
 
-def get_data_from_mysql(sql,configs=mysql_configs):
+def get_data_from_mysql(sql,configs):
     connection=pymysql.connect(host=configs['ip'], port=configs['port'], user=configs['user'],
                                 password=configs['password'], db=configs['dbname'], charset='utf8mb4')
     with connection.cursor() as cursor:
@@ -18,7 +18,7 @@ def get_data_from_mysql(sql,configs=mysql_configs):
         df=cursor.fetchall()
     return df
 
-def get_data_from_oracle(sql,configs=oracle_configs):
+def get_data_from_oracle(sql,configs):
     os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8' # 'SIMPLIFIED CHINESE_CHINA.UTF8'
     username = configs['username']
     password = configs['password']
@@ -33,15 +33,15 @@ def get_data_from_oracle(sql,configs=oracle_configs):
     dfs=pd.DataFrame(df,columns=[i[0].lower() for i in rx])
     return dfs
 
-def insert_data_to_oracle(sql,dataLst,configs=oracle_configs):
+def insert_data_to_oracle(sql,dataLst,configs):
     '''数据批量插入。
-    sql示例: INSERT INTO table_name(loan_no, fraudScore) VALUES(:loan_no,:fraudScore)
-    dataLst示例: [{'loan_no': '15000201801010475', 'fraudScore': '300'},
-                  {'loan_no': '15000201801010407', 'fraudScore': '40'}]
+    sql示例: INSERT INTO table_name(Numbs, Scores) VALUES(:Numbs,:Scores)
+    dataLst示例: [{'Numbs': '42004545401047', 'Scores': '300'},
+                  {'Numbs': '67064645010407', 'Scores': '40'}]
     dataframe转换dataLst方式：[v for k,v in datas.T.to_dict().items()]
     '''
-    oracle_tns = cx_Oracle.makedsn(oracle_configs.get('host'), oracle_configs.get('port'), oracle_configs.get('service_name'))
-    connectObj = cx_Oracle.connect(oracle_configs.get('username'), oracle_configs.get('password'), oracle_tns)
+    oracle_tns = cx_Oracle.makedsn(configs.get('host'), configs.get('port'), configs.get('service_name'))
+    connectObj = cx_Oracle.connect(configs.get('username'), configs.get('password'), oracle_tns)
     cursorObj = connectObj.cursor()
     cursorObj.prepare(sql)
     cursorObj.executemany(None, dataLst)
@@ -68,6 +68,6 @@ def code_transform(data,sys_code):
     return replace_data,replace_dict
 
 if __name__=='__main__':
-    base_info = get_data_from_oracle(sql='''select * from PCLODS.I_LOAN_BASE_INFO_V_NEW t where rownum<=100''')
-    sys_code = get_data_from_oracle(sql='''select * from PCL.SYS_CODE_INFO t''')
+    base_info = get_data_from_oracle(sql='''select * from tablename t where rownum<=100''',configs={})
+    sys_code = get_data_from_oracle(sql='''select * from tablename t''',configs={})
     data,replace_dict = code_transform(data=base_info,sys_code=sys_code)

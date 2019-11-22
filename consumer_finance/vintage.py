@@ -102,7 +102,7 @@ if __name__=='__main__':
                         when a.LOAN_NO in (select loan_no from gd_str_loanno) then '挂单门店非主营单'
                         else '其他' end as DIV_COLUMN,
                     sum(a.loan_amt) sum_loan_amt
-            from pclods.i_loan_base_info_v_new a
+            from 基础信息表 a
             where a.prod_line='PL201' and a.aprov_result='013005'
                     and a.apply_dt>='20180701' and a.apply_dt<'20190701'
             group by substr(a.apply_dt,1,6),
@@ -119,11 +119,11 @@ if __name__=='__main__':
                         when a.LOAN_NO in (select loan_no from gd_str_loanno) then '挂单门店非主营单'
                         else '其他' end as DIV_COLUMN,
                     sum(b.remain_prin_amt) M2P_AMT
-            from pclods.i_loan_base_info_v_new a 
+            from 基础信息表 a 
             right join 
                 (
                     select busi_dt,loan_no,remain_prin_amt
-                    from pcl.bus_t_loan_overdue_h_v_new
+                    from 历史逾期表（按期）
                     where busi_dt in ('20181001','20181101','20181201','20190101','20190201','20190302', '20190401','20190501','20190601','20190701','20190801','20190901')
                         and overdue_level>=2 and deal_status='046001'
                 ) b on b.loan_no=a.loan_no
