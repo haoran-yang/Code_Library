@@ -147,7 +147,7 @@ def showCluster(dataSet, k, centroids, clusterAssment):
 
 
 class ModelChoose():
-    '''模型选择'''
+    '''算法选择'''
     def __init__(self):
         pass
     def model_init(self,reDefine_clf = {},used_clf=[]):
