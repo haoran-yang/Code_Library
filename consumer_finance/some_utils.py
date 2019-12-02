@@ -5,11 +5,6 @@ import pymysql
 import cx_Oracle
 import math
 
-# 需要转换码值的字段
-trans_cols = ['cust_open_org', 'aprov_result', 'aprov_decision', 'is_insuuance', 'subj_id', 'is_attach', 'is_sa_rufuse', 'is_back_to_sa', 'is_back_to_check', 
-              'chal_code', 'fund_channel','cert_type', 'chal_code', 'cust_type', 'sex', 'reg_type', 'is_reg_live', 'live_build_type', 
-              'mth_tel_bill', 'is_real_name', 'mar_status', 'unit_type', 'industry', 'unit_scale', 'education', 'is_loaned', 'settle_type']
-
 def get_data_from_mysql(sql,configs):
     connection=pymysql.connect(host=configs['ip'], port=configs['port'], user=configs['user'],
                                 password=configs['password'], db=configs['dbname'], charset='utf8mb4')
@@ -68,6 +63,9 @@ def code_transform(data,sys_code):
     return replace_data,replace_dict
 
 if __name__=='__main__':
+    # 读取需要转换码值的字段
+    with open('./code_trans_cols.txt','r') as f:
+        trans_cols = eval(f.read())
     base_info = get_data_from_oracle(sql='''select * from tablename t where rownum<=100''',configs={})
     sys_code = get_data_from_oracle(sql='''select * from tablename t''',configs={})
     data,replace_dict = code_transform(data=base_info,sys_code=sys_code)

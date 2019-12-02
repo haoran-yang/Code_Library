@@ -7,7 +7,7 @@ import seaborn as sns
 import copy
 import math
 from collections import Counter
-from pyecharts import Bar,Line,Overlap,Grid,Page
+from pyecharts import Bar,Line,Overlap,Grid,Page  # 0.5.0版本
 
 
 class FeatureCountsPlot():
