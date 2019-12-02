@@ -6,10 +6,10 @@
 
 ## 汇总vintage
 - 合并拥有完整表现的月份数据
-- 图表数据为虚构，真实数据不宜展示
-![Total_Vintage](img/Total_Vintage.png)
+- 图表数据为虚构
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20191202142157373.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hhb3Jhbl95YW5n,size_16,color_FFFFFF,t_70)
 
 ## 各月vintage
 - 按月划分，可对比每月坏账表现
-- 图表数据为虚构，真实数据不宜展示
-![A_Vintage](img/A_Vintage.png)
+- 图表数据为虚构
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20191202142233605.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hhb3Jhbl95YW5n,size_16,color_FFFFFF,t_70)
