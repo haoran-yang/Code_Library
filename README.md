@@ -1,5 +1,5 @@
 # data science code base
-the code library for data science.
+the code base of data science.
 ## 1. model_params.py
 - lgb xgb lr svc rf等常用算法参数初始化及调参范围和步长
 ## 2. model_decision.py
